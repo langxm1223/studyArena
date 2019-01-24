@@ -1,0 +1,15 @@
+Git commands
+
+1. git reflog
+
+2. git reset --hard HEAD^
+
+Cmake commands
+
+1. src=$(wildcard *.c ./sub/*.c)	# 扩展所有通配符*到所有文件
+
+2. dir=$(notdir $(src))				# 去除路径只保留文件名
+
+3. obj=$(patsubst %.c,%.o,$(dir))	# 替换dir里所有的.c成.o
+
+4. $(OUTPUT:.js=.min.js)			# replace all .js with .min.js
