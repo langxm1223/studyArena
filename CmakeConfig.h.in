@@ -1,0 +1,5 @@
+// the configured options and settings for StudyArena
+// if we use cmakedefine instead of define, 0 or 
+// any false condition cannot be set due to definition
+#define StudyArena_VERSION_MAJOR @StudyArena_VERSION_MAJOR@
+#define StudyArena_VERSION_MINOR @StudyArena_VERSION_MINOR@

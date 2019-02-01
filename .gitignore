@@ -34,3 +34,7 @@
 # Generated Folders
 build/*
 bin/*
+
+#CTags files
+.tags
+.tags_sorted_by_file

@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Tao Jin
+# jintao@airlango.com 08/04/2016
+#
+# afmt is the script to format the C/C++ code in Google style with
+# astyle tool.
+#
+# Usage: run afmt to recursively format all .c, .cpp, .h and .hpp
+# file in current directory, excluding submodules.
+
+# check if there exists submodule in current path
+git submodule >/dev/null 2>&1
+
+# find all submodule paths
+if [ "$?" = "0" ]; then
+  submodules=(`git submodule | awk '{ print $2 }'`)
+  echo ${submodules[@]}
+fi
+
+module_num=${#submodules[@]}
+
+# build the grep -v command to exclude all submodule paths
+exclude_cmd="grep -v \".pb.h\|.pb.cpp"
+for (( i=0; i<${module_num}; i++ ));
+do
+  m=${submodules[$i]}
+  exclude_cmd="${exclude_cmd}\\|$m"
+done
+exclude_cmd="${exclude_cmd}\""
+
+# find all files with .c .cpp .h .hpp extension in current path, excluding
+# submodules
+find -type f -regex ".*\.\(c\|cpp\|h\|hpp\)"  | eval ${exclude_cmd} | \
+  xargs \
+    astyle --style=google \
+      --indent=spaces=2 --convert-tabs \
+      --keep-one-line-blocks \
+      --lineend=linux \
+      -S \
+      -H
+
+# after formate the code,we need to rm '*.orig' files
+for f in $(find . -name '*.orig' -type f)
+do
+  rm $f
+done
