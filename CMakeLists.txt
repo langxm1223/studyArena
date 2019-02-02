@@ -102,7 +102,129 @@ set(MY_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
 list(APPEND CMAKE_MODULE_PATH ${MY_SOURCE_DIR}/cmake)
 
-# insert here
+#=============================================================================
+# git
+#
+
+
+#=============================================================================
+# configuration
+#
+
+set(CONFIG "simple" CACHE STRING "desired configuration")
+
+include(add_project)
+set(config_project_list)
+
+# find cmake config
+#  look for in tree board config that matches CONFIG input
+if(NOT PX4_CONFIG_FILE)
+
+	file(GLOB_RECURSE board_configs
+		RELATIVE "${PX4_SOURCE_DIR}/boards"
+		"boards/*.cmake"
+		)
+
+	set(PX4_CONFIGS ${board_configs} CACHE STRINGS "PX4 board configs" FORCE)
+
+	foreach(filename ${board_configs})
+		# parse input CONFIG into components to match with existing in tree configs
+		#  the platform prefix (eg nuttx_) is historical, and removed if present
+		string(REPLACE ".cmake" "" filename_stripped ${filename})
+		string(REPLACE "/" ";" config ${filename_stripped})
+		list(LENGTH config config_len)
+
+		if(${config_len} EQUAL 3)
+
+
+			list(GET config 0 vendor)
+			list(GET config 1 model)
+			list(GET config 2 label)
+
+			set(board "${vendor}${model}")
+
+			# <VENDOR>_<MODEL>_<LABEL> (eg px4_fmu-v2_default)
+			# <VENDOR>_<MODEL>_default (eg px4_fmu-v2) # allow skipping label if "default"
+			if ((${CONFIG} MATCHES "${vendor}_${model}_${label}") OR # match full vendor, model, label
+			    ((${label} STREQUAL "default") AND (${CONFIG} STREQUAL "${vendor}_${model}")) # default label can be omitted
+			)
+				set(PX4_CONFIG_FILE "${PX4_SOURCE_DIR}/boards/${filename}" CACHE FILEPATH "path to PX4 CONFIG file" FORCE)
+				break()
+			endif()
+
+			# <BOARD>_<LABEL> (eg px4_fmu-v2_default)
+			# <BOARD>_default (eg px4_fmu-v2) # allow skipping label if "default"
+			if ((${CONFIG} MATCHES "${board}_${label}") OR # match full board, label
+			    ((${label} STREQUAL "default") AND (${CONFIG} STREQUAL "${board}")) # default label can be omitted
+			)
+				set(PX4_CONFIG_FILE "${PX4_SOURCE_DIR}/boards/${filename}" CACHE FILEPATH "path to PX4 CONFIG file" FORCE)
+				break()
+			endif()
+
+
+			# LEGACY form
+			# <OS>_<BOARD>_<LABEL> (eg nuttx_px4_fmu-v2_default)
+			string(REGEX REPLACE "^nuttx_|^posix_|^qurt_" "" config_no_os ${CONFIG}) # ignore OS prefix
+
+			if ((${config_no_os} MATCHES "${board}_${label}"))
+				set(PX4_CONFIG_FILE "${PX4_SOURCE_DIR}/boards/${filename}" CACHE FILEPATH "path to PX4 CONFIG file" FORCE)
+				break()
+			endif()
+
+
+			# LEGACY form special case to ease board layout transition (2018-11-18)
+			#  match board with model and label only: eg sitl_default -> px4_sitl_default
+			if ((${config_no_os} MATCHES "${model}_${label}"))
+				set(PX4_CONFIG_FILE "${PX4_SOURCE_DIR}/boards/${filename}" CACHE FILEPATH "path to PX4 CONFIG file" FORCE)
+				break()
+			endif()
+
+		endif()
+
+	endforeach()
+endif()
+
+if(NOT PX4_CONFIG_FILE)
+	message(FATAL_ERROR "PX4 config file not set, try one of ${PX4_CONFIGS}")
+endif()
+
+message(STATUS "PX4 config file: ${PX4_CONFIG_FILE}")
+include(px4_add_board)
+include(${PX4_CONFIG_FILE})
+message(STATUS "PX4 config: ${PX4_CONFIG}")
+message(STATUS "PX4 platform: ${PX4_PLATFORM}")
+
+# external modules
+set(EXTERNAL_MODULES_LOCATION "" CACHE STRING "External modules source location")
+
+if (NOT EXTERNAL_MODULES_LOCATION STREQUAL "")
+	get_filename_component(EXTERNAL_MODULES_LOCATION "${EXTERNAL_MODULES_LOCATION}" ABSOLUTE)
+endif()
+
+set_property(GLOBAL PROPERTY PX4_MODULE_CONFIG_FILES)
+
+include(platforms/${PX4_PLATFORM}/cmake/px4_impl_os.cmake)
+list(APPEND CMAKE_MODULE_PATH ${PX4_SOURCE_DIR}/platforms/${PX4_PLATFORM}/cmake)
+
+# CMake build type (Debug Release RelWithDebInfo MinSizeRel Coverage)
+if (NOT CMAKE_BUILD_TYPE)
+	if (${PX4_PLATFORM} STREQUAL "nuttx")
+		set(PX4_BUILD_TYPE "MinSizeRel")
+	else()
+		set(PX4_BUILD_TYPE "RelWithDebInfo")
+	endif()
+
+	set(CMAKE_BUILD_TYPE ${PX4_BUILD_TYPE} CACHE STRING "Build type" FORCE)
+endif()
+
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage;AddressSanitizer;UndefinedBehaviorSanitizer")
+
+#=============================================================================
+
+message(STATUS "PX4 version: ${PX4_GIT_TAG}")
+message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
+
+
 
 project(StudyArena)
 add_executable(hello src/main.cpp)
@@ -130,12 +252,3 @@ include_directories("${PROJECT_BINARY_DIR}")
 include(CTest)
 # does the application run
 add_test(StudyArenaRuns hello 25)
-
-#####################################################################
-# test CMake area
-set(EXTRA_LIBTEST ${EXTRA_LIBTEST} MathFunctions)
-set(EXTRA_LIBTEST ${EXTRA_LIBTEST} LogFunctions)
-# Here double quotes are necessary to output EXTRA_LIBTEST as separate variables
-message(STATUS "${EXTRA_LIBTEST}")
-message(${PROJECT_BINARY_DIR})
-message(${MAKE})

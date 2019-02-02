@@ -17,3 +17,5 @@ Cmake commands
 5. if() returns true if the inside is defined and not 0 or false or off etc.
 
 6. In cmake_parse_arguments, the last argument ${ARGN} CANNOT be ignored
+
+7. Double quotes are necessary to output variables separately
