@@ -13,3 +13,7 @@ Cmake commands
 3. obj=$(patsubst %.c,%.o,$(dir))	# 替换dir里所有的.c成.o
 
 4. $(OUTPUT:.js=.min.js)			# replace all .js with .min.js
+
+5. if() returns true if the inside is defined and not 0 or false or off etc.
+
+6. In cmake_parse_arguments, the last argument ${ARGN} CANNOT be ignored

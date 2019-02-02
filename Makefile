@@ -12,8 +12,9 @@
 #    notice, this list of conditions and the following disclaimer in
 #    the documentation and/or other materials provided with the
 #    distribution.
-# 3. My name may not be used to endorse or promote products derived
-#    from this software without specific prior written permission.
+# 3. Neither the name Xiaoming Lang nor the names of its contributors may be
+#    used to endorse or promote products derived from this software
+#    without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -30,8 +31,15 @@
 #
 ############################################################################
 
-# Enforce the presence of the GIT repository
+# This Makefile is an imitative file from PX4.
+# At the mean time, it is an experimental place to learn makefile rules.
+# All the make rules can be found in the official manual below:
+# https://www.gnu.org/software/make/manual/html_node/index.html
 
+# Another way to execute them in one shell is
+# .ONESHELL:
+
+# Enforce the presence of the GIT repository
 ifeq ($(wildcard .git),)
     $(error YOU HAVE TO USE GIT TO DOWNLOAD THIS REPOSITORY. ABORTING.)
 endif
@@ -51,9 +59,7 @@ endif
 # directory build/msckf_vio and then call make
 # in that directory with the target upload.
 
-# Sxplicity set default build target
-# Another way to execute them in one shell is
-# .ONESHELL:
+# explicity set default build target
 all: simple
 
 # Parsing
