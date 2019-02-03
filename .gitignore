@@ -35,6 +35,9 @@
 build/*
 bin/*
 
+# sublime-text workspace
+*.sublime-workspace
+
 #CTags files
 .tags
 .tags_sorted_by_file
