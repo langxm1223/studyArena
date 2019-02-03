@@ -31,31 +31,57 @@
 #
 ############################################################################
 
-include(base)
+include(my_base)
 
 #=============================================================================
 #
-#	px4_add_library
+#	my_add_git_submodule
 #
-#	Like add_library but with PX4 platform dependencies
+#	This function add a git submodule target.
 #
-function(px4_add_library target)
-	add_library(${target} ${ARGN})
+#	Usage:
+#		my_add_git_submodule(TARGET <target> PATH <path>)
+#
+#	Input:
+#		PATH		: git submodule path
+#
+#	Output:
+#		TARGET		: git target
+#
+#	Example:
+#		my_add_git_submodule(TARGET git_nuttx PATH "NuttX")
+#
+function(my_add_git_submodule)
+	my_parse_function_args(
+		NAME my_add_git_submodule
+		ONE_VALUE TARGET PATH
+		REQUIRED TARGET PATH
+		ARGN ${ARGN})
 
-	target_compile_definitions(${target} PRIVATE MODULE_NAME="${target}")
+	set(REL_PATH)
 
-	# all PX4 libraries have access to parameters and uORB
-	add_dependencies(${target} uorb_headers)
-	target_link_libraries(${target} PRIVATE prebuild_targets parameters_interface uorb_msgs)
-
-	# TODO: move to platform layer
-	if ("${PX4_PLATFORM}" MATCHES "nuttx")
-		target_link_libraries(${target} PRIVATE m nuttx_c)
+	if(IS_ABSOLUTE ${PATH})
+		file(RELATIVE_PATH REL_PATH ${MY_SOURCE_DIR} ${PATH})
+	else()
+		file(RELATIVE_PATH REL_PATH ${MY_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${PATH})
 	endif()
 
-	# Pass variable to the parent px4_add_module.
-	set(_no_optimization_for_target ${_no_optimization_for_target} PARENT_SCOPE)
+	execute_process(
+		COMMAND Tools/check_submodules.sh ${REL_PATH}
+		WORKING_DIRECTORY ${MY_SOURCE_DIR}
+		)
 
-	set_property(GLOBAL APPEND PROPERTY PX4_LIBRARIES ${target})
-	set_property(GLOBAL APPEND PROPERTY PX4_MODULE_PATHS ${CMAKE_CURRENT_SOURCE_DIR})
+	string(REPLACE "/" "_" NAME ${PATH})
+	string(REPLACE "." "_" NAME ${NAME})
+
+	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/git_init_${NAME}.stamp
+		COMMAND Tools/check_submodules.sh ${REL_PATH}
+		COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/git_init_${NAME}.stamp
+		DEPENDS ${MY_SOURCE_DIR}/.gitmodules ${PATH}/.git
+		COMMENT "git submodule ${REL_PATH}"
+		WORKING_DIRECTORY ${MY_SOURCE_DIR}
+		USES_TERMINAL
+		)
+
+	add_custom_target(${TARGET} DEPENDS git_init_${NAME}.stamp)
 endfunction()

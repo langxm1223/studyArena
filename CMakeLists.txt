@@ -105,7 +105,7 @@ list(APPEND CMAKE_MODULE_PATH ${MY_SOURCE_DIR}/cmake)
 #=============================================================================
 # git
 #
-include(git_info)
+include(my_git)
 
 execute_process(
 	COMMAND git describe --always --tags
@@ -129,9 +129,9 @@ define_property(GLOBAL PROPERTY PROJECT_PATHS
 # configuration
 #
 
-set(CONFIG "simple" CACHE STRING "desired configuration")
+set(CONFIG "simple" CACHE STRING "desired project configuration")
 
-include(add_project)
+include(my_add_project)
 set(config_project_list)
 
 # find cmake config
@@ -257,7 +257,7 @@ configure_file (
   "${MY_SOURCE_DIR}/CmakeConfig.h.in"
   "${MY_BINARY_DIR}/CmakeConfig.h"
   )
- 
+
 # add the binary tree to the search path for include files
 # so that we will find TutorialConfig.h
 include_directories("${MY_BINARY_DIR}")

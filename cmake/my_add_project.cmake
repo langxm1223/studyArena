@@ -31,16 +31,16 @@
 #
 ############################################################################
 
-include(base)
+include(my_base)
 
 #=============================================================================
 #
-#	add_project
+#	my_add_project
 #
 #	This function builds a static library from a project description.
 #
 #	Usage:
-#		add_project(PROJECT <string>
+#		my_add_project(PROJECT <string>
 #			MAIN <string>
 #			[ STACK_MAIN <string> ]
 #			[ STACK_MAX <string> ]
@@ -70,7 +70,7 @@ include(base)
 #		Static library with name matching PROJECT.
 #
 #	Example:
-#		add_project(PROJECT test
+#		my_add_project(PROJECT test
 #			SRCS
 #				file.cpp
 #			STACK_MAIN 1024
@@ -78,12 +78,12 @@ include(base)
 #				git_nuttx
 #			)
 #
-function(add_project)
+function(my_add_project)
 
-	px4_parse_function_args(
-		NAME add_project
+	my_parse_function_args(
+		NAME my_add_project
 		ONE_VALUE PROJECT MAIN STACK STACK_MAIN STACK_MAX PRIORITY
-		MULTI_VALUE COMPILE_FLAGS LINK_FLAGS SRCS INCLUDES DEPENDS MODULE_CONFIG
+		MULTI_VALUE COMPILE_FLAGS LINK_FLAGS SRCS INCLUDES DEPENDS PROJECT_CONFIG
 		OPTIONS EXTERNAL DYNAMIC UNITY_BUILD
 		REQUIRED PROJECT MAIN
 		ARGN ${ARGN})
@@ -99,7 +99,7 @@ function(add_project)
 			target_include_directories(${PROJECT}_original PRIVATE ${INCLUDES})
 		endif()
 		target_compile_definitions(${PROJECT}_original PRIVATE PX4_MAIN=${MAIN}_app_main)
-		target_compile_definitions(${PROJECT}_original PRIVATE MODULE_NAME="${MAIN}_original")
+		target_compile_definitions(${PROJECT}_original PRIVATE PROJECT_NAME="${MAIN}_original")
 
 		# unity build
 		add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT}_unity.cpp
@@ -148,11 +148,11 @@ function(add_project)
 
 	if(NOT DYNAMIC)
 		target_link_libraries(${PROJECT} PRIVATE prebuild_targets parameters_interface platforms__common px4_layer systemlib)
-		set_property(GLOBAL APPEND PROPERTY PX4_MODULE_LIBRARIES ${PROJECT})
-		set_property(GLOBAL APPEND PROPERTY PX4_MODULE_PATHS ${CMAKE_CURRENT_SOURCE_DIR})
+		set_property(GLOBAL APPEND PROPERTY PX4_PROJECT_LIBRARIES ${PROJECT})
+		set_property(GLOBAL APPEND PROPERTY PX4_PROJECT_PATHS ${CMAKE_CURRENT_SOURCE_DIR})
 	endif()
 
-	# Pass variable to the parent add_project.
+	# Pass variable to the parent my_add_project.
 	set(_no_optimization_for_target ${_no_optimization_for_target} PARENT_SCOPE)
 
 	# set defaults if not set
@@ -181,9 +181,9 @@ function(add_project)
 
 	if(MAIN)
 		target_compile_definitions(${PROJECT} PRIVATE PX4_MAIN=${MAIN}_app_main)
-		target_compile_definitions(${PROJECT} PRIVATE MODULE_NAME="${MAIN}")
+		target_compile_definitions(${PROJECT} PRIVATE PROJECT_NAME="${MAIN}")
 	else()
-		target_compile_definitions(${PROJECT} PRIVATE MODULE_NAME="${PROJECT}")
+		target_compile_definitions(${PROJECT} PRIVATE PROJECT_NAME="${PROJECT}")
 	endif()
 
 	if(COMPILE_FLAGS)
@@ -213,9 +213,9 @@ function(add_project)
 		endif()
 	endforeach()
 
-	if(MODULE_CONFIG)
-		foreach(project_config ${MODULE_CONFIG})
-			set_property(GLOBAL APPEND PROPERTY PX4_MODULE_CONFIG_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${project_config})
+	if(PROJECT_CONFIG)
+		foreach(project_config ${PROJECT_CONFIG})
+			set_property(GLOBAL APPEND PROPERTY PX4_PROJECT_CONFIG_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${project_config})
 		endforeach()
 	endif()
 endfunction()

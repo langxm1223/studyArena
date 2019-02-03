@@ -40,6 +40,6 @@
 #		* generate_xml
 #
 
-function(generate_xml)
+function(my_generate_xml)
 	:
 endfunction()
