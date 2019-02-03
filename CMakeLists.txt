@@ -105,6 +105,24 @@ list(APPEND CMAKE_MODULE_PATH ${MY_SOURCE_DIR}/cmake)
 #=============================================================================
 # git
 #
+include(git_info)
+
+execute_process(
+	COMMAND git describe --always --tags
+	OUTPUT_VARIABLE PX4_GIT_TAG
+	OUTPUT_STRIP_TRAILING_WHITESPACE
+	WORKING_DIRECTORY ${MY_SOURCE_DIR}
+	)
+
+define_property(GLOBAL PROPERTY PROJECT_LIBRARIES
+                 BRIEF_DOCS "Project libs"
+                 FULL_DOCS "List of all Project libraries"
+                 )
+
+define_property(GLOBAL PROPERTY PROJECT_PATHS
+                 BRIEF_DOCS "Project paths"
+                 FULL_DOCS "List of paths to all Projects"
+                 )
 
 
 #=============================================================================
@@ -224,10 +242,10 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebIn
 message(STATUS "PX4 version: ${PX4_GIT_TAG}")
 message(STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
 
-
-
-project(StudyArena)
-add_executable(hello src/main.cpp)
+#=============================================================================
+# project definition
+#
+project(StudyArena CXX C ASM)
 
 # Version
 set(StudyArena_VERSION_MAJOR 0)
@@ -236,13 +254,34 @@ set(StudyArena_VERSION_MINOR 1)
 # configure a header file to pass some of the CMake settings
 # to the source code
 configure_file (
-  "${PROJECT_SOURCE_DIR}/CmakeConfig.h.in"
-  "${PROJECT_BINARY_DIR}/CmakeConfig.h"
+  "${MY_SOURCE_DIR}/CmakeConfig.h.in"
+  "${MY_BINARY_DIR}/CmakeConfig.h"
   )
  
 # add the binary tree to the search path for include files
 # so that we will find TutorialConfig.h
-include_directories("${PROJECT_BINARY_DIR}")
+include_directories("${MY_BINARY_DIR}")
+
+set(repo-contact "langxm1223@gmail.com")
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# For the catkin build process, unset build of dynamically-linked binaries
+# and do not change CMAKE_RUNTIME_OUTPUT_DIRECTORY
+if (NOT CATKIN_DEVEL_PREFIX)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MY_BINARY_DIR})
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${MY_BINARY_DIR})
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${MY_BINARY_DIR})
+else()
+	SET(BUILD_SHARED_LIBS OFF)
+endif()
+
+#=============================================================================
+add_executable(hello src/main.cpp)
 
 # glog
 #find_package(glog REQUIRED)
